@@ -22,7 +22,6 @@
 - [Fenwick.cpp](data_structures/Fenwick.cpp)
 - [Fenwick2D.cpp](data_structures/Fenwick2D.cpp)
 - [LazySegtree.cpp](data_structures/LazySegtree.cpp)
-- [MaxSubarraySegtree.cpp](data_structures/MaxSubarraySegtree.cpp)
 - [MoAlgorithm.cpp](data_structures/MoAlgorithm.cpp)
 - [Pbds.cpp](data_structures/Pbds.cpp)
 - [Segtree.cpp](data_structures/Segtree.cpp)

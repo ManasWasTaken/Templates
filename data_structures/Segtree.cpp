@@ -8,86 +8,79 @@ using namespace std;
 #endif
 const int M=1e9+7;
 #define int long long
-struct segtree{
-    vector<int> arr; //the array
-    int n; //size of the array
-    int identity_element; 
-    vector<int> st;
-    segtree(vector<int> arr, int n, int identity_element) : arr(arr), n(n), identity_element(identity_element), st(4 * n, identity_element) {
-        build(0, 0, n - 1);
+
+const int N=1<<18; // Power of two; for 1-based indexing, n < N.
+struct Node{
+    int sum;
+    int max_sum;
+    int max_sum_left;
+    int max_sum_right;
+} tree[2*N];
+
+Node merge(const Node &l,const Node &r){
+    return {
+        l.sum+r.sum,
+        max({l.max_sum,r.max_sum,l.max_sum_right+r.max_sum_left}),
+        max(l.max_sum_left,l.sum+r.max_sum_left),
+        max(r.max_sum_right,r.sum+l.max_sum_right)
+    };
+}
+
+void update(int i,int x){
+    i+=N;
+    tree[i]={x,max(x,0LL),max(x,0LL),max(x,0LL)};
+    while(i>1){
+        i/=2;
+        tree[i]=merge(tree[2*i],tree[2*i+1]);
     }
-    int combine(int a,int b){ //change here for different operations
-        return max(a,b);
+}
+
+Node query(int l,int r){ // Inclusive [l,r]; empty subarrays are allowed.
+    Node left{},right{};
+    l+=N;
+    r+=N;
+    while(l<=r){
+        if(l&1) left=merge(left,tree[l++]);
+        if(!(r&1)) right=merge(tree[r--],right);
+        l/=2;
+        r/=2;
     }
-    void build(int node,int l,int r){
-        if(l==r){
-            st[node]=arr[l];
-            return;
-        }
-        int left=2 * node + 1;
-        int right=2 * node + 2;
-        int mid= (l + r)/2;
-        build(left,l,mid);
-        build(right,mid+1,r);
-        st[node]=combine(st[left],st[right]);
+    return merge(left,right); // Preserve left-to-right merge order.
+}
+
+// First endpoint reaching maximum subarray sum k, or -1. O(log N).
+// Call walk(1,0,N-1,k); pref holds the skipped prefix.
+int walk(int node,int l,int r,int k,Node pref={}){
+    if(merge(pref,tree[node]).max_sum<k) return -1;
+    if(l==r) return l;
+    int left=2*node;
+    int right=2*node+1;
+    int mid=(l+r)/2;
+    Node next=merge(pref,tree[left]);
+    if(next.max_sum>=k){
+        return walk(left,l,mid,k,pref);
     }
-    void update(int node,int l,int r,int index,int val){
-        if(l==r){
-            st[node]=val;
-            return;
-        }
-        int left=2 * node + 1;
-        int right=2 * node + 2;
-        int mid= (l + r)/2;
-        if(index<=mid){
-            update(left,l,mid,index,val);
-        }
-        else{
-            update(right,mid+1,r,index,val);
-        }
-        st[node]=combine(st[left],st[right]);
+    else{
+        return walk(right,mid+1,r,k,next);
     }
-    int query(int node,int l,int r,int lx,int rx){
-        if (r < lx || l > rx) {
-            return identity_element;
-        }
-        if (l >= lx && r <= rx) {
-            return st[node];
-        }
-        int left= (2 * node) + 1;
-        int right= (2 * node) + 2;
-        int mid= (l + r)/2;
-        int a=query(left,l,mid,lx,rx);
-        int b=query(right,mid+1,r,lx,rx);
-        return combine(a,b);
-    }
-    int walk(int node,int l,int r,int k){
-        if(st[node]<k) return -1;
-        if(l==r){
-            return l;
-        }
-        int left=2 * node + 1;
-        int right=2 * node + 2;
-        int mid= (l + r)/2;
-        if(k<=st[left]){
-            return walk(left,l,mid,k);
-        }
-        else{
-            return walk(right,mid+1,r,k);
-        }
-    }
- 
-    void update_point(int index, int val){
-        update(0,0,n-1,index,val);
-    }
- 
-    int range_query(int l, int r){
-        return query(0, 0, n - 1, l, r);
-    }
-    
-};
+}
+
 void solve(){
-    
+    int n,q;
+    cin>>n>>q;
+    for(int i=1;i<=n;i++){
+        int x;
+        cin>>x;
+        update(i,x);
+    }
+    while(q--){
+        int k,x;
+        cin>>k>>x;
+        update(k,x);
+        cout<<tree[1].max_sum<<'\n';
+        // query(l,r).max_sum gives the maximum subarray sum on [l,r].
+        // walk(1,0,N-1,k) finds the first endpoint reaching maximum subarray sum k.
+    }
 }
 int32_t main(){
     cout<<fixed;
@@ -96,7 +89,7 @@ int32_t main(){
     cout<<setprecision(15)<<fixed;
     int t=1;
     while(t--){
-       solve(); 
+       solve();
     }
     return 0;
 }
