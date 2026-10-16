@@ -1,8 +1,5 @@
 {
     "files.associations": {
-        "PollardRho.C": "cpp",
-        "cht.C": "cpp",
-        "MaxFlow.C": "cpp",
         "array": "cpp",
         "deque": "cpp",
         "forward_list": "cpp",
@@ -13,7 +10,6 @@
         "vector": "cpp",
         "initializer_list": "cpp",
         "regex": "cpp",
-        "valarray": "cpp",
-        "centroidD.C": "cpp"
+        "valarray": "cpp"
     }
 }

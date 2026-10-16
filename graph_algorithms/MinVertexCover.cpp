@@ -9,7 +9,7 @@ using namespace std;
 //   1. Bipartite graph            -> Konig: |min cover| = |max matching|   O(E sqrt(V))
 //   2. Tree / forest              -> DP                                    O(n)
 //   3. General graph, n < 64      -> branching on bitmasks                 O(1.38^n * n)
-//   Weighted bipartite            -> min cut with Dinic (MaxFlow.C):
+//   Weighted bipartite            -> min cut with Dinic (MaxFlow.cpp):
 //        S -> u (cap w[u]) for u in L,  u -> v (cap INF) per edge,  v -> T (cap w[v]) for v in R
 //        min cover weight = max flow; cover = (L NOT reachable from S) + (R reachable from S)
 //        in the residual graph after the flow.

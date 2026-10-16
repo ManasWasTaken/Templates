@@ -6,7 +6,7 @@ using namespace std;
 using namespace __gnu_pbds;
 
 #ifndef ONLINE_JUDGE
-#include "debug.h"
+#include "../miscellaneous/Debug.h"
 #else
 #define debug(...) 8
 #endif

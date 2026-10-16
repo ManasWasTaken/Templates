@@ -2,7 +2,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 #ifndef ONLINE_JUDGE
-#include "debug.h"
+#include "../miscellaneous/Debug.h"
 #else
 #define debug(...) 8
 #endif
