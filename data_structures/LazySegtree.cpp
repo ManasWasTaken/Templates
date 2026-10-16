@@ -8,139 +8,113 @@ using namespace std;
 #endif
 const int M=1e9+7;
 #define int long long
-struct LazySegmentTree {
-    int n;
-    vector<int> arr;
-    vector<int> st;
-    vector<int> lazy;
-    const int IDENTITY_ELEMENT = 1e18; 
-    const int IDENTITY_UPDATE = 0;    
+template<class Node, class Update>
+struct Segtree {
+    int n=0;
+    vector<Node> st;
+    vector<Update> lazy;
+    vector<bool> pending;
 
-    LazySegmentTree(const std::vector<int>& x) {
-        arr = x;
-        n = arr.size();
-        st.resize(4 * n, IDENTITY_ELEMENT);
-        lazy.assign(4 * n, IDENTITY_UPDATE);
-        build(0, 0, n - 1);
+    Segtree() {}
+
+    Segtree(int n):Segtree(vector<long long>(n)) {}
+
+    template<class T>
+    Segtree(const vector<T> &a):n(a.size()),st(4*n),
+        lazy(4*n),pending(4*n,false){
+        if(n) build(0,0,n-1,a);
     }
 
-    int combine(int a, int b) { //the operation
-        return min(a,b);
+    void pull(int p){
+        st[p].merge(st[2*p+1],st[2*p+2]);
     }
 
-    void apply_update(int node,int Size) { //applying updates
-        st[node] += (lazy[node]); 
-    }
-
-    void combine_lazy(int node, int new_update) { //combining updates
-        lazy[node] += new_update;
-    }
-
-    void build(int node, int l, int r) {
-        if (l == r) {
-            st[node] = arr[l];
+    template<class T>
+    void build(int p,int l,int r,const vector<T> &a){
+        if(l==r){
+            st[p]=Node(a[l]);
             return;
         }
-        int mid = l + (r - l) / 2;
-        int left_child = 2 * node + 1;
-        int right_child = 2 * node + 2;
-
-        build(left_child, l, mid);
-        build(right_child, mid + 1, r);
-
-        st[node] = combine(st[left_child], st[right_child]);
+        int m=(l+r)/2;
+        build(2*p+1,l,m,a);
+        build(2*p+2,m+1,r,a);
+        pull(p);
     }
 
-    void push(int node, int l, int r) {
-        if (lazy[node] == IDENTITY_UPDATE) {
+    void apply(int p,int l,int r,const Update &u){
+        u.apply(st[p],l,r);
+        if(l==r) return;
+        lazy[p].merge(u,l,r);
+        pending[p]=true;
+    }
+
+    void push(int p,int l,int r){
+        if(!pending[p]) return;
+        int m=(l+r)/2;
+        apply(2*p+1,l,m,lazy[p]);
+        apply(2*p+2,m+1,r,lazy[p]);
+        lazy[p]=Update();
+        pending[p]=false;
+    }
+
+    void update(int p,int l,int r,int ql,int qr,const Update &u){
+        if(r<ql || qr<l) return;
+        if(ql<=l && r<=qr){
+            apply(p,l,r,u);
             return;
         }
-
-        apply_update(node,r-l+1);
-
-        if (l != r) {
-            int left_child = 2 * node + 1;
-            int right_child = 2 * node + 2;
-            combine_lazy(left_child, lazy[node]);
-            combine_lazy(right_child, lazy[node]);
-        }
-
-        lazy[node] = IDENTITY_UPDATE;
+        push(p,l,r);
+        int m=(l+r)/2;
+        update(2*p+1,l,m,ql,qr,u);
+        update(2*p+2,m+1,r,ql,qr,u);
+        pull(p);
     }
 
-    void update(int node, int l, int r, int lq, int rq, int val) {
-        push(node, l, r);
-
-        if (r < lq || l > rq) {
-            return;
-        }
-
-        if (l >= lq && r <= rq) {
-            combine_lazy(node, val); 
-            push(node, l, r);        
-            return;
-        }
-
-        int mid = l + (r - l) / 2;
-        int left_child = 2 * node + 1;
-        int right_child = 2 * node + 2;
-        update(left_child, l, mid, lq, rq, val);
-        update(right_child, mid + 1, r, lq, rq, val);
-
-        push(left_child, l, mid);
-        push(right_child, mid + 1, r);
-        st[node] = combine(st[left_child], st[right_child]);
+    Node query(int p,int l,int r,int ql,int qr){
+        if(r<ql || qr<l) return Node();
+        if(ql<=l && r<=qr) return st[p];
+        push(p,l,r);
+        int m=(l+r)/2;
+        Node ans;
+        ans.merge(query(2*p+1,l,m,ql,qr),
+                  query(2*p+2,m+1,r,ql,qr));
+        return ans;
     }
 
-    int query(int node, int l, int r, int lq, int rq) {
-        push(node, l, r);
-
-        if (r < lq || l > rq) {
-            return IDENTITY_ELEMENT; 
-        }
-
-        if (l >= lq && r <= rq) {
-            return st[node]; 
-        }
-
-        int mid = l + (r - l) / 2;
-        int left_child = 2 * node + 1;
-        int right_child = 2 * node + 2;
-        int left_result = query(left_child, l, mid, lq, rq);
-        int right_result = query(right_child, mid + 1, r, lq, rq);
-
-        return combine(left_result, right_result);
+    void update(int l,int r,const Update &u){
+        if(n && l<=r) update(0,0,n-1,l,r,u);
     }
 
-    int walk(int node, int l, int r, int k) {
-        push(node, l, r);
-        if (st[node] > k) return -1;
-        if (l == r) return l;
-        int mid = l + (r - l) / 2;
-        int left_child = 2 * node + 1;
-        int right_child = 2 * node + 2;
-        push(left_child, l, mid);
-        push(right_child, mid + 1, r);
-        if (st[left_child] <= k)
-            return walk(left_child, l, mid, k);
-        else
-            return walk(right_child, mid + 1, r, k);
+    Node query(int l,int r){
+        if(!n || l>r) return Node();
+        return query(0,0,n-1,l,r);
+    }
+};
+
+struct Node {
+    long long val=LLONG_MIN;
+
+    Node() {}
+    Node(long long x):val(x) {}
+
+    void merge(const Node &l,const Node &r){
+        val=max(l.val,r.val);
+    }
+};
+
+struct Update {
+    long long add=0;
+
+    Update() {}
+    Update(long long x):add(x) {}
+
+    // Existing update first, then u.
+    void merge(const Update &u,int l,int r){
+        add+=u.add;
     }
 
-public:
-
-    void range_update(int l, int r, int val) {
-        if (l > r) return;
-        update(0, 0, n - 1, l, r, val);
-    }
-
-    int range_query(int l, int r) {
-        if (l > r) return IDENTITY_ELEMENT;
-        return query(0, 0, n - 1, l, r);
-    }
-
-    int walker(int k) {
-        return walk(0, 0, n - 1, k);
+    void apply(Node &node,int l,int r) const{
+        node.val+=add;
     }
 };
 void solve(){
